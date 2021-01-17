@@ -1,4 +1,4 @@
-﻿var cookie = {
+var cookie = {
 	set: function(name, value) {
 		var Days = 30;
 		var exp = new Date();
