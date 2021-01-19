@@ -1,0 +1,82 @@
+@charset "utf-8";
+/*页面全局背景文字颜色*/
+body{background:#2b2a2a;color:#999;}
+/*H标签A标签字体颜色*/
+h1, h2, h3, h4, h5, h6, a,.details-play-title .nav-tabs > li.active > a, .details-play-title .nav-tabs > li.active > a:focus, .details-play-title .nav-tabs > li.active > a:hover,.details-play-title .nav-tabs > li >a:hover,.details-play-title .nav-tabs > li.open >a,.details-play-title .dropdown-menu > li > a,.dropdown-menu > li > a{color:#b2b2b2;}
+/*A标签选择颜色与部分高亮文字颜色*/
+a:focus, a:hover,.nav-search .btn-search,.swiper-pagination-bullet.swiper-pagination-bullet-active,.text-color,.box-star-list .video-pic,.box-video-text-list ul li .key,.list-mcat .content-menu .item ul li a.active,.list-mcat .content-menu .head span,.list-mcat .content-menu .item ul li a:hover,.details-info .info li storng a,.details-info .info li storng,.details-info .info li em,.rating-kong-item .nopingfen,.rating-kong-item,.rating-kong-item,.pingfen-total strong,.rating-box .rating-show em,.details-story  h4 em,.comment-assist a:hover,.comment-top .user,.comment-top a,.details-content p a,.details-tv .item h4 a,.details-title h1 a,.swiper-pagination-current,.tv_detail_box ul li a,.nick-name span,.user_login:hover .iconfont,.playlog_list ul:hover .iconfont,.user_playlog:hover,.autocomplete-suggestions strong,.navbar-search:hover,.zanpian-modal-tabs li:hover a,.zanpian-modal-tabs li.active a{color:#09BB07;}
+.pingfen-total em,.comment-replay-assist .ui-button,.ui-signed li:hover a{color:#fff;}
+/*盒子背景阴影*/
+.layout-box,.navbar-inverse,.box-mcid-list,.list-mcat,.box-video-details,.comment-post,.comment-replay,.drop-box,.popover,.playlog_list,.autocomplete-suggestions{box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);}
+/*导航切换颜色*/
+.navbar-inverse .navbar-nav > .active > a,.navbar-inverse .navbar-nav > li > a:hover{color:#fff;background-color:#080808;}
+.list-mcat .left-head li a.active,.layout-box,.navbar-inverse,.box-mcid-list,.list-mcat,.box-video-details,.details-play-title .nav-tabs > li.active > a, .details-play-title .nav-tabs > li.active > a:focus, .details-play-title .nav-tabs > li.active > a:hover,.details-play-title .nav-tabs > li >a:hover,.details-play-title .nav-tabs > li.open >a,.details-play-title .dropdown-menu,.comment-sub,.dropdown-menu,.drop-box,.popover,.playlog_list,.autocomplete-suggestions,.user-search .nav-search,.box-star-list .star-pic{background-color:#333;}
+.index-menu li a,.box-index-mcid li a,.box-page ul li a,.box-page ul li.active span,.nav-search .form-control,.index-menu li a,#rating,.playlist ul li a,.details-page a,.box-gbook .item .content,.comment-num,.comment-sub,.tv_txt_list ul li span.b{border:1px solid #2b2a2a;}
+.box-main-side .side,.box-gbook .item .content p,.box-title.bt{border-bottom: 1px solid #2b2a2a;}/*下实线*/
+.box-min-mcid .item dl,.tv_txt_list ul li{border-left: 1px solid #2b2a2a;}/*左实线*/
+.text-muted,.list-mcat .content-menu .head span.text,.list-mcat .content-menu .item ul li a,.rating-kong-item .loadingg,.details-tv em.time,.details-info ul.info li span{color:#666;}
+.index-menu li a:hover,.box-index-mcid li a:hover,.playlist ul li a:hover,.playlist ul li a.active,.player_playlist ul li a:hover,.player_playlist ul li a.active,.index-menu li a:hover .text-color,.video-pic .score,.swiper-pagination-bullet-active,.box-video-ranking li .num.active,.box-video-text-list ul li .num.active,.box-title-nav li a:hover,.box-title-nav li a.active,.box-page ul li a:hover,.box-page ul li.active span,.box-video-text-list ul li .tv.active,.tv-diantai li:hover .tv,.list-mcat .content-meun .head dl dd span,.details-tool a:hover,.details-tool a.active,.rating-box .rating-show .power-item,.tv-live,#rating span.ratingtxt,.details-page a:hover,.actor-box .actor-title.active,.box-index-mcid li.active a,.player_bottom .prevnext a:hover,.tv_txt_list ul li:hover span.b,.tv_detail_week ul a:hover,.tv_detail_week ul a.active,.ui-signed li:hover{background-color:#09BB07;color:#fff;}
+.box-video-ranking ul li .num,.box-video-text-list ul li .num,.index-menu li a,.box-index-mcid li a,.box-title-nav li a,.box-page ul li span,.tv-diantai li .tv,.nav-search .form-control,.index-menu li a,.details-tool a,.playlist ul li a,.player_playlist ul li a,.details-story  h4,.details-tv .item h4,.comment-post,.details-page a,.details-title h1,.actor-title,.layout-box .more-click,.box-gbook .item .content,.comment-num,.news_remark,.player_bottom .prevnext a,.tv_txt_list ul li span.b,.tv_detail_week,.playlog_list ul li:hover,.autocomplete-selected,.slider-extra li a,.slider-extra li span,.slider-extra li .sideslip{background-color: #444;color: #999;}
+.box-page ul li a,.news-txt,.news-box:hover,.news-box-txt{background-color: #2b2a2a;box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);color:#b2b2b2;}
+.actor-main{background-color: #2b2a2a;color:#b2b2b2;}
+.news-box-txt:hover{background-color:#444;box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);}
+.player_right .details-play-title .nav-tabs > li > a#myTabDrop2{ background-color:#444;}
+.play_barrage .input {background-color:#484848}
+.barrage_m{background:#161616;border:10px solid #999;}
+.barrage_switch{background:#161616;}
+.play_barrage{ background-color:#000;}
+.player_playlist::-webkit-scrollbar-thumb {background:#535353;}
+.player_playlist::-webkit-scrollbar-track {background: #EDEDED;}
+/*图片评分推荐等背景颜色*/
+.video-pic .score::before,.slide-pic .score::before{border-top: 4px solid #09BB07;border-left: 4px solid transparent;}
+.video-pic .tips.orange,.video-pic .tv.orange,.slide-pic .tips.orange,.slide-pic .tv.orange{background: #ff7822;background: linear-gradient(to left,#ff7822 0,#ff9c29 100%);}
+.video-pic .tips.red,.video-pic .tv.red,.slide-pic .tips.red,.slide-pic .tv.red,.new-tip{background:#FA474B;background: linear-gradient(to left,#ff2823 0,#ff8466 100%);}
+.video-pic .tips.blue,.video-pic .tv.blue,.slide-pic .tips.blue,.slide-pic .tv.blue{background:#2DD671;background: linear-gradient(to left,#3b9eff 0,#19c3ff 100%);}
+.video-pic .tips.green,.video-pic .tv.green,.slide-pic .tips.green,.slide-pic .tv.green{background:#09BB07;background: linear-gradient(to left,#8BBB07 0,#09BB07 100%);}
+.video-pic .num,#rating span.ratingtxt{background-color: #09BB07;color:#FFF}
+.details-nav ul li{ float:left; padding:13px 18px;background-color:#333;}
+.details-nav ul li.active{background-color:#09BB07;}
+.details-nav ul li.active a,.details-slide-next .iconfont,.swiper-button-next .iconfont,.swiper-button-prev .iconfont,.details-nav ul li:hover a,.player-shrink{color:#FFF;}
+.box-video-text-list ul li,.box-video-footer a,.list-mcat .content-menu .item ul,.box-down-list .downlist,.table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td{border-top:1px dashed #2b2a2a;}/*上虚线*/
+.details-tv-t,.tv_detail_box ul li{border-bottom:1px dashed #2b2a2a;}/*下虚线*/
+.box-switch-tabs .nav-tabs li.active a,.zanpian-modal-tabs li:hover,.zanpian-modal-tabs li.active{border: 0;border-bottom-width: 0px;border-bottom-style: none;border-bottom-color: currentcolor;background: none;border-bottom: 2px solid #09BB07;color: #09BB07;}
+.box-switch-tabs .nav-tabs, .table>thead>tr>th{border-bottom: 2px solid #2b2a2a;}/*下实线*/
+.tv-diantai li .tv em{border-left:14px solid #444;}/*左实线*/
+.tv-live em.tv-live-l{border-right:12px solid #09BB07;}/*右实线*/
+.tv_detail_title{background-color:#4B4B4B;}
+.comment-post-arrow{border-right:12px solid #444;}/*右实线*/
+.comment-replay-arrow{border-bottom: 12px solid #333;}
+.comment-replay{background:#333;}
+.slider-extra li .sideslip:after,.slider-extra li .sideslip:before{border-left-color:#444;}
+.popover > .arrow, .popover > .arrow::after,.drop-box:after,.drop-box:before{border-bottom-color: #333!important;}
+.popover > .arrow, .popover > .arrow::after{border-top-color: #333!important;}
+.playlog_list:after,.playlog_list:before{border-bottom-color:#444!important;}
+.popover-title,.playlog-tool{background-color:#444;border-bottom: 1px solid #2b2a2a; text-align:center}
+
+.box-star-list li:hover a span:after,.box-star-list li:hover a span:before,.box-star-list li.active a span:after,.box-star-list li.active a span:before{order-bottom: 6px solid #333;}
+.star-video-list .box-star-list{border-top: 1px solid #2b2a2a;}
+.box-star-list li:hover a span:before,.box-star-list li.active a span:before{border-bottom-color:#2b2a2a;}
+
+.details-slide img,.details-content img{border:1px solid #444;}
+.box-video-text-list ul li .tv.active em,.tv-diantai li:hover .tv em{border-left-color:#09BB07;}
+.tv-diantai li .tv,.list-mcat:before,#rating{background-color:#444;color:#fff;}
+.rating-bar-item{border:1px solid #09BB07;background:#09BB07}
+
+.b-l{border-left:1px solid #6C6C6C;}/*导航凹槽*/
+.b-r{border-right: 1px solid #101010;}/*导航凹槽*/
+
+
+.fnum{color:#F18167}/*鲜花字体颜色*/
+/*明星浅色背景*/
+.star_details.light .star_hot_info,.star_details.light .star_hot_info h1,.star_details.light .star_hot_right h3,.star_details.light .star_hot_right a,.tv_txt_list ul li p{ color:#333}
+#zanpiancms_player{background-color:#000;}
+@media (min-width: 768px) {
+.zanpian-mobile .navbar-nav > li a{border: 1px solid #2b2a2a;background-color: #444;}	
+.zanpian-mobile .navbar-nav > li a:hover{background-color: #09BB07;}	
+}
+
+@media (max-width:767px){
+.navbar-inverse .navbar-nav > li a{border: 1px solid #2b2a2a;background-color: #444;}	
+.navbar-inverse .navbar-nav > li a:hover{background-color: #09BB07;}	
+.box-min-mcid .item dl{border-left:0;border-top: 1px dashed #2b2a2a;}
+}
