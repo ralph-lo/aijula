@@ -7,7 +7,12 @@ var zanpian = {
 	'url': document.URL,
 	'domain': document.domain,
 	'title': document.title,
-	'language': (navigator.browserLanguage || navigator.language).toLowerCase(),//zh-tw|zh-hk|zh-cn
+	'language': function(){
+		try {
+		  var ua = (navigator.language || navigator.browserLanguage).toLowerCase();//zh-tw|zh-hk|zh-cn
+		  return ua;
+		} catch (e) {}
+	}(),
 	'canvas' : function(){
 		return !!document.createElement('canvas').getContext;
 	}(),
@@ -81,6 +86,7 @@ var zanpian = {
 				$('body').append($html);
 				$('.zanpian-modal').modal('show');
 				$("body").css("padding","0px");
+				$("body").css("padding-top","60px");
 			}
 		})
 	},
@@ -104,7 +110,7 @@ var zanpian = {
 		})
 		//点击弹出注册窗口
 		$('body').on("click", "#register", function() {
-			zanpian.cms.modal(cms.root + 'index.php?s=user-reg-ajax');
+			zanpian.cms.modal(cms.root + 'index.php?s=/home/ajax/reg');
 			zanpian.user.reg();
 		});
 		//显示更多
@@ -139,13 +145,12 @@ var zanpian = {
 			$(".player_left").toggleClass("max");
 			$(".player-shrink").toggleClass("icon-left");
 		});
-      	//关闭右侧关注我们
-	$("#widget-WeChat").click(function(){
-		$(this).hide();
-	});		
 		if ($('.player_playlist').length > 0){
 		   zanpian.player.playerlist() ;   	
 		}
+		$('body').on("click", "#lyric", function(event){
+			$("#"+$(this).data('id')).toggle();
+		});		
 		$(window).resize(function() {
 		   zanpian.player.playerlist() ; 					  
         });
@@ -162,10 +167,62 @@ var zanpian = {
 			$(".player_left").toggleClass("player-top")
 			$(".player_right").toggleClass("player-top")
 		});
+         $('body').on("focus", "#id_input", function(){
+			//$("#role_list").hide();						   
+		})
+		$('body').on("click", "#get_role", function() {
+             $("#role_list").show();
+		});
+		$('body').on("click", "#user_detail_add", function(event){
+			if (!zanpian.user.islogin()) {
+				zanpian.user.loginform();
+				return false;
+			}
+			var url=$(this).data('url');
+			zanpian.cms.modal(url);
+		});		
+		
 	}
 },
 'list': {
 	//列表AJAX响应
+	'more': function() {
+		if ($('#content-more').length > 0) {
+		var msg_list_loading = false;
+		var i = 2;
+		$(window).scroll(function() {
+			if (!msg_list_loading){
+				load_more_msg(more_ajax_url);
+			}
+		})
+		function load_more_msg(url) {
+			var winH = $(window).height();
+			var pageH = $(document.body).height();
+			var scrollT = $(window).scrollTop(); //滚动条top
+			var aa = (pageH - winH - scrollT) / winH;
+			if (aa < 0.02) {
+				msg_list_loading = true;
+				$("#content-more").append('<div class="loading" id="moreloading">正在加载中</div>');
+				$.get(url + '-p-' + i, function(data, status) {
+					var value = jQuery('#content-more',data).html();
+					$("#content-more").find("#moreloading").remove();
+					if (value == null || value == '') {
+						value = '<div class="kong">抱歉，已经没有数据了！</div>';
+						msg_list_loading = true;
+						$("#content-more").append(value);
+						return false;
+					}
+					$("#content-more").append(value);
+					msg_list_loading = false;
+					$(".loading").lazyload({
+						effect: 'fadeIn'
+					});
+					i++;
+				});
+			}
+		}
+	  }
+	},
 	'ajax': function() {
 		$('body').on("click", ".list_type ul li a", function(e) {
 			if (type_parms != undefined && type_parms != null) {
@@ -227,7 +284,7 @@ var zanpian = {
 			});
 			$(this).addClass('active');
 			zanpian.list.url(url);
-		});		
+		});
 		$('body').on("click", "#conreset a", function(e) {
 			var curdata = $(this).attr('data').split('-');
 			type_parms = {
@@ -249,6 +306,7 @@ var zanpian = {
 			deltype();
 			deltitle();
 		});
+
 		function deltitle() {
 			var constr = '';
 			$('.list_type ul li a').each(function(e) {
@@ -259,6 +317,7 @@ var zanpian = {
 			});
 			if (constr != '') $('.conbread').html(constr);
 		}
+
 		function deltype() {
 			$('.list_type ul li a').each(function(e) {
 				$(this).removeClass('active');
@@ -268,6 +327,7 @@ var zanpian = {
 			});
 			return false;
 		}
+
 		function emptyconbread() {
 			$('.list_type ul li a').each(function(e) {
 				$(this).removeClass('active');
@@ -277,6 +337,7 @@ var zanpian = {
 			});
 			return false;
 		}
+
 		function parseurl(rr) {
 			var url = cms.root + type_ajax_url;
 			for (var c in rr) {
@@ -288,30 +349,30 @@ var zanpian = {
 		}
 	},
 	'url': function(url) {
-           if (($('#content li').length > 3)) $("html,body").animate({
-				scrollTop: $("#content").offset().top - 93
-			}, 500);
-			$("#content").html('<div class="loading">努力加载中……</div>');
-			$.get(url,function(data, status) {
-				var value = jQuery('#content', data).html();
-				if (value == null || value == '') {
-					value = '<div class="kong">抱歉，没有找到相关内容！</div>';
-				}
-				$("#content").html(value);
-				$("#short-page").html(jQuery('#short-page', data).html())
-				$("#long-page").html(jQuery('#long-page', data).html())
-				$("#total-page").html(jQuery('#total-page', data).html())
-				$("#current-page").html(jQuery('#current-page', data).html())
-				$("#count").html(jQuery('#count', data).html())
-				$(".loading").lazyload({
-					effect: 'fadeIn'
-				});
-				if(zanpian.browser.language=='zh-hk' || zanpian.browser.language=='zh-tw'){
+		if (($('#content li').length > 3)) $("html,body").animate({
+			scrollTop: $("#content").offset().top - 93
+		}, 500);
+		$("#content").html('<div class="loading">努力加载中……</div>');
+		$.get(url, function(data, status) {
+			var value = jQuery('#content', data).html();
+			if (value == null || value == '') {
+				value = '<div class="kong">抱歉，没有找到相关内容！</div>';
+			}
+			$("#content").html(value);
+			$("#short-page").html(jQuery('#short-page', data).html())
+			$("#long-page").html(jQuery('#long-page', data).html())
+			$("#total-page").html(jQuery('#total-page', data).html())
+			$("#current-page").html(jQuery('#current-page', data).html())
+			$("#count").html(jQuery('#count', data).html())
+			$(".loading").lazyload({
+				effect: 'fadeIn'
+			});
+			if (zanpian.browser.language == 'zh-hk' || zanpian.browser.language == 'zh-tw') {
 				$(document.body).s2t();
-				}
-			});		
-		
-	},	
+			}
+		});
+
+	},
 },
 'detail': {
 	'collapse': function() { //内容详情折叠
@@ -421,12 +482,12 @@ var zanpian = {
 	
 	},	
 	//播放权限回调
-	'vip_callback': function($vod_id, $vod_sid, $vod_pid, $status, $trysee, $tips) {
+	'vip_callback': function($vod_id,$vod_sid,$vod_pid,$status,$trysee,$tips) {
 		if($status != 200){
 			if($trysee > 0){
 				window.setTimeout(function(){
-					$.get(cms.root+'index.php?s=home-vod-vip-type-trysee-id-'+$vod_id+'-sid-'+$vod_sid+'-pid-'+$vod_pid, function(html){
-						var index='<div class="embed-responsive embed-responsive-16by9"><div id="zanpiancms-player-vip"><div class="zanpiancms-player-box jumbotron">'+html+'</div></div></div>';																							  
+					$.get(cms.root+'index.php?s=/home/vod/vip/type/trysee/id/'+$vod_id+'/sid/'+$vod_sid+'/pid/'+$vod_pid, function(html){
+						var index='<div class="embed-responsive embed-responsive-16by9"><div id="zanpiancms-player-vip"><div class="zanpiancms-player-box jumbotron">'+html+'</div></div></div>';																							
 						$('#zanpiancms_player').html(index);
 						//$('.zanpiancms-player-box').html(html).addClass("jumbotron");
 						//zanpian.user.iframe();
@@ -441,7 +502,7 @@ var zanpian = {
 			$('body').on("click","#user-weixinpwd",function(){
 				$(this).text('Loading...');
 				$pwd=$(".password").val();
-				$.get(cms.root+'index.php?s=home-vod-vip-type-pwd-id-'+$vod_id+'-sid-'+$vod_sid+'-pid-'+$vod_pid+'-pwd-'+$pwd, function(json){
+				$.get(cms.root+'index.php?s=/home/vod/vip/type/pwd/id/'+$vod_id+'/sid/'+$vod_sid+'/pid/'+$vod_pid+'/pwd/'+$pwd, function(json){
 					if(json.status == 200){
 						zanpian.user.iframe();
 					}else{
@@ -453,9 +514,19 @@ var zanpian = {
 			//支付影币按钮
 			$('body').on("click","#user-price",function(){
 				$(this).text('Loading...');
-				$.get(cms.root+'index.php?s=home-vod-vip-type-ispay-id-'+$vod_id+'-sid-'+$vod_sid+'-pid-'+$vod_pid, function(json){
+				var obj=$(this);
+				$.get(cms.root+'index.php?s=/home/vod/vip/type/ispay/id/'+$vod_id+'/sid/'+$vod_sid+'/pid/'+$vod_pid, function(json){
 					if(json.status == 200){
+						$.showfloatdiv({txt: '支付成功',cssname : 'succ'});
+						$.hidediv();
 						zanpian.user.iframe();
+					}else if(json.status == 602){
+						 obj.text('确定');
+                         $.showfloatdiv({txt: json.info})
+						 $.hidediv({})
+						 setTimeout(function() {
+				            zanpian.user.payment();
+				        }, 1000);
 					}else if(json.status == 500 || json.status == 501){
 						//zanpian.user.login();
 					}else{
@@ -471,53 +542,35 @@ var zanpian = {
 
 'updown': { //顶踩与送花
 	'load': function() {
-		if ($('#updown').length > 0) {
-			$('body').on("click", "#updown #up,#updown #down", function() {
-				$.showfloatdiv({
+			$('body').on("click", "#up,#down,#flower,#digg", function() {
+			$.showfloatdiv({
 					txt: '数据提交中...',
 					cssname: 'loading'
-				});
+			});
+			var obj = $(this);	
 			$.ajax({
-			type: 'get',
+			type: 'post',
+			data: {'id':$(this).data("id"),'sid':$(this).data("sid"),'type':$(this).data("type"),'name':$(this).data("name")},
 			dataType:'json',
 			cache: false,
-			url: cms.root + "index.php?s=home-updown-index-id-" + $(this).attr("data-id") + "-type-" + $(this).attr("data-type") + "-sid-" + $(this).attr("data-sid"),
+			url: cms.root + "index.php?s=/home/digg/index",
 			timeout: 3000,
-			success: function(r) {
+			success: function(r){
 					$.hidediv(r);
-					if (parseInt(r.rcode) > 0) {
-						$(this).find('#count').text($(this).find('$count').text() + 1)
+					if (parseInt(r.code) > 0){
+						count=obj.find('#count').text()*1+1;
+						obj.find('#count').text(count);
+						obj.find('#count').attr('data-count',count)
 					}
 				}});
 			});
-		}
 		$("#flower").hover(function() {
-			$(this).find("#flower-count").text("送花");
+			$(this).find("#count").text("送花");
 		}, function() {
-			var count = $(this).find("#flower-count").attr("data-count")
-			$(this).find("#flower-count").text(count);
+			var count = $(this).find("#count").attr("data-count")
+			$(this).find("#count").text(count);
 		});
-		$('body').on("click", "#flower", function() {
-			$.showfloatdiv({
-				txt: '数据提交中...',
-				cssname: 'loading'
-			});
-			$.ajax({
-			type: 'get',
-			dataType:'json',
-			cache: false,
-			url: cms.root + "index.php?s=user-comm-flower-id-" + $(this).attr("data-id") + "-sid-" + $(this).attr("data-sid")+".html",
-			timeout: 3000,
-			success: function(r) {
-				$.hidediv(r);
-				if (parseInt(r.rcode) > 0) {
-					txt:r.msg,
-					$("#flower-count").text(r.data)
-					$("#flower-count").attr('data-count',r.data)
 
-				}
-			}});
-		});
 	},
 },
 'barrage': { //弹幕
@@ -525,16 +578,16 @@ var zanpian = {
 		$.ajaxSetup({
 			cache: true
 		});
-		if ($(".play_barrage").length) {
+		if ($("#barrage").length) {
 			$("<link>").attr({
 				rel: "stylesheet",
 				type: "text/css",
-				href: cms.public + "admin/barrager/barrager.css"
+				href: cms.public + "cms/barrager/barrager.css"
 			}).appendTo("head");
-			$.getScript(cms.public + "admin/barrager/jquery.barrager.js");
+			$.getScript(cms.public + "cms/barrager/jquery.barrager.js");
 		}
-		if ($('.barrage_switch').is('.on')) {
-			zanpian.barrage.get();
+		if($('.barrage_switch').is('.on')) {
+			zanpian.barrage.get(0);
 		}
 		$('body').on("click", "#slider", function() {
 			if ($('.barrage_switch').is('.on')) {
@@ -542,7 +595,7 @@ var zanpian = {
 				$.fn.barrager.removeAll();
 				clearInterval(looper);
 				return false;
-			} else {
+			}else{
 				$('.barrage_switch').addClass('on');
 				zanpian.barrage.get(0);
 			}
@@ -557,19 +610,21 @@ var zanpian = {
 				txt: '数据提交中,请稍后...',
 				onsucc: function(result) {
 					$.hidediv(result);
-					if (parseInt(result['rcode']) > 0) {
+					if (parseInt(result['code']) > 0) {
 						zanpian.barrage.get(1);
+					}else{
+						$('img.validate-img').attr("src",zanpian.image.validateurl());
 					}
 				}
 			}).post({
-				url: cms.root + 'index.php?s=user-home-addcomm'
+				url: cms.root + 'index.php?s=/home/barrage/add'
 			});
 			return false;
 		});
 	},
 	'get': function(t) {
-		if (cms.id != undefined && cms.id != null && cms.id != '') {
-			var url = cms.root + "index.php?s=home-barrage-index-t-" + t + "-id-" + cms.id;
+		if ($("#barrage").data('id') != undefined && $("#barrage").data('id') != null && $("#barrage").data('id') != '') {
+			var url = cms.root + "index.php?s=/home/barrage/index/t/" + t + "/id/" + $("#barrage").data('id');
 		} else {
 			return false;
 		}
@@ -620,11 +675,10 @@ var zanpian = {
 				$.ajax({
 			      type: 'get',
 			      cache: false,
-			      url: cms.root + "index.php?s=user-comm-"+a.attr("data-type")+"-id-" + a.attr("data-id")+"-cid-"+a.attr("data-cid")+".html",
+			      url: cms.root + "index.php?s=/home/ajax/mark/type/"+a.attr("data-type")+"/id/" + a.attr("data-id")+"/cid/"+a.attr("data-cid"),
 			      timeout: 3000,
 			      success: function(a) {
-			      	txt: a.msg,
-					$.hidediv(a), parseInt(a.rcode) > 0 ? (d.hide(), c.show(), b.show()) : parseInt(a["yjdy"]) > 0 && 1 == parseInt(a["yjdy"]) && (d.hide(a), c.show(), b.show())
+					$.hidediv(a), parseInt(a.code) > 0 ? (d.hide(), c.show(), b.show()) : parseInt(a["yjdy"]) > 0 && 1 == parseInt(a["yjdy"]) && (d.hide(a), c.show(), b.show())
 				}})
 			}), b.click(function() {
 				$.showfloatdiv({
@@ -633,11 +687,10 @@ var zanpian = {
 				}),$.ajax({
 			      type: 'get',
 			      cache: false,
-			      url: cms.root + "index.php?s=user-comm-"+a.attr("data-type")+"-id-" + a.attr("data-id")+"-cid-"+a.attr("data-cid")+".html",
+			      url: cms.root + "index.php?s=/home/ajax/mark/type/"+a.attr("data-type")+"/id/" + a.attr("data-id")+"/cid/"+a.attr("data-cid"),
 			      timeout: 3000,
 			      success: function(b){
-			      	txt: b.msg,
-					$.hidediv(b), parseInt(b.rcode) > 0 && (a.show(), c.hide())
+					$.hidediv(b), parseInt(b.code) > 0 && (a.show(), c.hide())
 				}})
 			})
 		})
@@ -647,13 +700,13 @@ var zanpian = {
 //评分
 'score': {
 	'load': function() {
-		  if (cms.id != undefined && cms.id != null && cms.id != '' && $('#zanpian-score').length > 0 && $('#zanpian-cm').length < 0) {
-		   zanpian.score.ajax(cms.root + "index.php?s=home-mark-ajax-id-" + cms.id)
+		 if ($('#zanpian-score').length > 0 && $('#zanpian-cm').length<=0) {
+		   zanpian.score.ajax(cms.root + "index.php?s=/home/ajax/gold/id/" + $('#zanpian-score').data('id')+"/sid/"+$('#zanpian-score').data('sid'))
 		 }
 	},
 	'loading': function() {
-		  if (cms.id != undefined && cms.id != null && cms.id != '' && $('#zanpian-score').length > 0) {
-		   zanpian.score.ajax(cms.root + "index.php?s=home-mark-ajax-id-" + cms.id)
+		  if ($('#zanpian-score').length > 0) {
+		   zanpian.score.ajax(cms.root + "index.php?s=/home/ajax/gold/id/" + $('#zanpian-score').data('id')+"/sid/"+$('#zanpian-score').data('sid'))
 		 }
 	},	
      //加载评分与订阅收藏
@@ -663,8 +716,8 @@ var zanpian = {
 			cache: false,
 			timeout: 3000,
 			success: function(data) {
-				if (data.star != undefined && data.star != null) {
-					zanpian.score.stars(data.star);
+				if (data.gold != undefined && data.gold != null) {
+					zanpian.score.stars(data.gold);
 				};
 			}
 			});
@@ -683,23 +736,23 @@ var zanpian = {
 					}), $.hidediv({})) : ($.showfloatdiv({
 						txt: "数据提交中...",
 						cssname: "loading"
-					}), c.removeClass("active"), $("ul.rating li:lt(" + e + ")").addClass("active"), $("#ratewords").html(b),$.post(cms.root + "index.php?s=user-comm-mark",{
+					}), c.removeClass("active"), $("ul.rating li:lt(" + e + ")").addClass("active"), $("#ratewords").html(b),$.post(cms.root + "index.php?s=/home/ajax/addgold",{
 						val: $(this).attr("val"),
 						id: cms.id,
 						sid: cms.sid
 					},function(a) {
-						if (parseInt(a.rcode) == 1) {
+						if (parseInt(a.code) == 1) {
 							$.ajax({
 								type: 'get',
 								cache: false,
 								timeout: 3000,
-								url: cms.root + "index.php?s=user-comm-start-id-" + cms.id ,
+								url: cms.root + "index.php?s=/home/ajax/gold/id/" + cms.id +"/sid/"+ cms.sid,
 								success: function(data) {
-									zanpian.score.stars(data.star);
+									zanpian.score.stars(data.gold);
 								}
 							});
 						}
-						parseInt(a.rcode) > 0 ? ($.hidediv(a), loadstat(), hadpingfen = 1) : -2 == parseInt(a.rcode) ? (hadpingfen = 1, $.showfloatdiv({
+						parseInt(a.code) > 0 ? ($.hidediv(a), loadstat(), hadpingfen = 1) : -2 == parseInt(a.code) ? (hadpingfen = 1, $.showfloatdiv({
 							txt: "已经评分,请务重复评分"
 						}), $.hidediv({})) : ($.closefloatdiv(), $("#innermsg").trigger("click"))
 
@@ -717,13 +770,13 @@ var zanpian = {
 			})
 		}		
 		var hadpingfen = 0;
-		var curstars = parseInt(r.mystars);
+		var curstars = parseInt(r.mygold);
 		$("#pa").html(r['curpingfen'].a + "人");
 		$("#pb").html(r['curpingfen'].b + "人");
 		$("#pc").html(r['curpingfen'].c + "人");
 		$("#pd").html(r['curpingfen'].d + "人");
 		$("#pe").html(r['curpingfen'].e + "人");
-		$("#vgold").html(r['curpingfen'].pinfen);
+		$("#vod_gold").html(r['curpingfen'].pinfen);
 		var totalnum = parseInt(r['curpingfen'].a) + parseInt(r['curpingfen'].b) + parseInt(r['curpingfen'].c) + parseInt(r['curpingfen'].d) + parseInt(r['curpingfen'].e);
 		if (totalnum > 0) {
 			$("#pam").css("width", ((parseInt(r['curpingfen'].a) / totalnum) * 100) + "%");
@@ -789,8 +842,8 @@ var zanpian = {
 			$.ajax({
 				type: 'get',
 				cache: false,
-				url: cms.root + 'index.php?s=user-comm-getplaylog',
-				timeout: 3000,
+				url: cms.root + 'index.php?s=/home/playlog/get',
+				timeout: 10000,
 				success: function($html) {
 					$(".playlog_list").html($html);
 					zanpian.user.userinfo();
@@ -806,21 +859,21 @@ var zanpian = {
 			       type: 'get',
 			       cache: false,
 				   dataType:'json',
-			       url: cms.root + 'index.php?s=user-comm-emptyhistory',
-			       timeout: 3000,
+			       url: cms.root + 'index.php?s=/home/playlog/clear',
+			       timeout: 10000,
 			       success: function(data) {											 
-					if (parseInt(data["rcode"]) > 0) {
+					if (parseInt(data["code"]) > 0) {
 						$(".playlog_list").html("<ul><strong>暂无观看历史记录列表</strong></ul>");
 					}
 				}})
 			});
 			$('body').on("click", "#playlog-del", function(event) {
 				event.preventDefault();
-				$.post(cms.root + 'index.php?s=user-comm-delplaylog', {
+				$.post(cms.root + 'index.php?s=/user/playlog/del', {
 					log_id: $(this).attr('data-id'),
-					vod_id: $(this).attr('data-vid')
+					log_vid: $(this).attr('data-vid')
 				}, function(data) {
-					if (parseInt(data["rcode"]) > 0) {}
+					if (parseInt(data["code"]) > 0) {}
 				}, "json")
 				$(this).parent().remove();
 			});
@@ -831,10 +884,10 @@ var zanpian = {
 	},
 	'set': function() {
 		if ($(".playlog-set").eq(0).attr('data-pid')) {
-			$.post(cms.root + "index.php?s=user-comm-addplaylog", {
-				vod_id: $(".playlog-set").attr('data-id'),
-				vod_sid: $(".playlog-set").attr('data-sid'),
-				vod_pid: $(".playlog-set").attr('data-pid'),
+			$.post(cms.root + "index.php?s=/home/playlog/set", {
+				log_vid: $(".playlog-set").attr('data-id'),
+				log_sid: $(".playlog-set").attr('data-sid'),
+				log_pid: $(".playlog-set").attr('data-pid'),
 				log_urlname: $(".playlog-set").attr('data-name'),
 				log_maxnum: $(".playlog-set").attr('data-count')
 			});
@@ -857,11 +910,13 @@ var zanpian = {
 		}
 	},	
 	'forum': function(){
+		    var id=$("#zanpian-cm").data('id');
+			var sid=$("#zanpian-cm").data('sid');
 		    //如果同时需要评分并加载
 		    if($('#zanpian-score').length > 0){
-			zanpian.cm.ajax(cms.root + "index.php?s=user-comm-get-id-" + cms.id + "-sid-" + cms.sid);
+			   zanpian.cm.ajax(cms.root + "index.php?s=/home/ajax/get/id/" + id + "/sid/" + sid);
 			}else{
-			zanpian.cm.ajax(cms.root + "index.php?s=user-comm-get-id-" + cms.id + "-sid-" + cms.sid);	
+			   zanpian.cm.ajax(cms.root + "index.php?s=/home/ajax/cm/id/" + id + "/sid/" + sid);	
 			}
 			zanpian.cm.emo();
 			$("#subcomm").click(function(e){
@@ -871,16 +926,18 @@ var zanpian = {
 					txt: '数据提交中,请稍后...',
 					onsucc: function(result) {
 						$.hidediv(result);
-						if (parseInt(result['rcode']) > 0) {
-							zanpian.cm.ajax(cms.root + "index.php?s=user-comm-get-id-" + cms.id + "-sid-" + cms.sid)
+						if (parseInt(result['code']) > 0) {
+							zanpian.cm.ajax(cms.root + "index.php?s=home/ajax/cm/id/" + id + "/sid/" + sid)
+						}else{
+							$('img.validate-img').attr("src",zanpian.image.validateurl());	
 						}
-						if(parseInt(result['rcode']) < -1){
+						if(parseInt(result['code']) < -1){
 							 zanpian.user.loginform();
 							 return false;	
 						}
 					}
 				}).post({
-					url: cms.root + 'index.php?s=user-center-addcomm-sid-'+cms.sid+'-id-'+cms.id
+					url: cms.root + 'index.php?s=home/ajax/addcm/sid/'+sid+'/id/'+id
 				});
 				return false;
 			});
@@ -914,9 +971,8 @@ var zanpian = {
 	},
 	//评论表情
 	'emo': function() {
-      console.log(1);
-		$.get(cms.root + 'index.php?s=user-comm-cm',function(data){
-		//$("#emots").html(data);
+		$.get(cms.public + 'cms/emots.html',function(data){
+		$("#emots").html(data);
 		$('body').on("click",".emotion",function(){
 			var left = $(this).offset().left;
 			var top = $(this).offset().top;
@@ -973,81 +1029,77 @@ var zanpian = {
 			cache: false,
 			timeout: 3000,
 			success: function(data) {
-				if (data.ajaxtxt != '') {
+				if (data!= ''){
 					if ($('#datalist li').length > 3) $("html,body").animate({
 						scrollTop: $("#datalist").offset().top - 130
 					}, 1000);
-					$("#datalist").empty().html(data.ajaxtxt);
+					$("#comment").empty().html(data.comment);
+					$("#commnum").html(jQuery('#comment-count',data.comment).html());
+					$("#data").empty().html(data);
 					if(zanpian.browser.language=='zh-hk' || zanpian.browser.language=='zh-tw'){
-					$(document.body).s2t();
+					    $(document.body).s2t();
 					}
 					$("#commnum").html(data.count);																
 					$(".digg a").click(function(e) {										  
-						var id = $(this).attr('data-id');
-						var type = $(this).attr('data-type');
-						suburl($(this).attr('data'),$(this));
+						var id = $(this).data('id');
+						var type = $(this).data('type');
+						suburl($(this).data('url'),$(this));
 						return false;
 					});
-					$(".reply").click(function(e) {
+					$(".reply").click(function(e){
 						var curid = $(this).attr('data-id');
 						var curpid = $(this).attr('data-pid');
+						var curtid = $(this).attr('data-tid');
 						var curtuid = $(this).attr('data-tuid');
 						var curvid = $(this).attr('data-vid');
 						var cursid = $(this).attr('data-sid');
 						if (!zanpian.user.islogin()) {
-                         
 							zanpian.user.loginform();
 							return false;
 						} else {
-                          
 							if ($("#rep" + curid).html() != '') {
-                             
 								$("#rep" + curid).html('');
 							} else {
 								
 								$(".comms").html('');
 								$("#rep" + curid).html($("#commsub").html());
-                            
 								$(".emotion,#smileBoxOuter").blur(function() {
 									var is_hover = $("#smileBoxOuter").attr("is-hover");
 									if (is_hover != 1) {
 										$("#smileBoxOuter").hide()
 									}
 								});
-                              
 								$("#rep" + curid + " #comm_pid").val(curpid); //顶级ID
 								$("#rep" + curid + " #comm_id").val(curid); //回贴ID
+								$("#rep" + curid + " #comm_tid").val(curtid); //回贴ID
 								$("#rep" + curid + " #comm_tuid").val(curtuid); //回贴用户ID
 								$("#rep"+ curid+ " #comm_sid").val(cursid);
 								$("#rep"+ curid+ " #comm_vid").val(curvid);
 								$("#rep" + curid + " #row_id").attr("data-id", curid)
 								$("#rep" + curid + " .recm_id").attr("id", 'reply_' + curid)
 								$("#rep" + curid + " .sub").unbind();
-                               console.log("#rep" + curid + " .sub")
-                              
 								$("#rep" + curid + " .sub").click(function(e) {
-								if(!zanpian.user.islogin()){zanpian.user.loginform();return false; }		
-                                   
+								if(!zanpian.user.islogin()){zanpian.user.loginform();return false;}										   
 								$("#rep" + curid + " #comm-sub-form").zanpiansub({
 										curobj: $("#rep" + curid + " .sub"),
 										txt: '数据提交中,请稍后...',
 										onsucc: function(result) {
 											$.hidediv(result);
-											if (parseInt(result['rcode']) > 0){
-												zanpian.cm.ajax(cms.root + "index.php?s=user-comm-get-id-" + cms.id + "-sid-" + cms.sid);
+											if (parseInt(result['code']) > 0){
+												zanpian.cm.ajax(url);
+											}else{
+												$('img.validate-img').attr("src",zanpian.image.validateurl());
 											}
-											if(parseInt(result['rcode']) < -1){
+											if(parseInt(result['code']) < -1){
 											       zanpian.user.loginform();
 							                       return false;	
 											}
 											
 										}
 									}).post({
-										url: cms.root + 'index.php?s=user-center-addrecomm'
+										url: cms.root + 'index.php?s=/home/ajax/addrecm'
 									});
 								});
-                              
-                              
 							}
 						}
 					});
@@ -1055,9 +1107,8 @@ var zanpian = {
 					$("#datalist").html('<li class="kong">当前没有评论，赶紧抢个沙发！</li>');
 				};
 				
-				if (data.star != undefined && data.star != null) {
-					
-				         zanpian.score.stars(data.star);
+				if (data.gold != undefined && data.gold != null) {
+				         zanpian.score.stars(data.gold);
 			    };	
 				$("#pages").html(data.pages);
 				$("#pagetop").html(data.pagetop);
@@ -1074,19 +1125,78 @@ var zanpian = {
 
 },
 'user': {
-	//会员基础功能
 	'index': function() {
 		zanpian.user.login();
 		zanpian.user.reg();
 		zanpian.user.home();
 		zanpian.user.center();
+    var countdown=60;
+    function settime(val) {
+        if (countdown == 0) {
+			val.addClass('btn-success').prop('disabled', false);
+            val.val("获取验证码");
+            countdown = 60;
+            return true;
+        } else {
+			val.removeClass('btn-success').prop('disabled', true);
+			val.val("重新发送(" + countdown + ")");
+            countdown--;
+        }
+        setTimeout(function() {settime(val) },1000)
+    }		
+		//重新发送邮件
+		$('body').on("click", "#send", function() {								
+			var ac = $('input[name="ac"]').val();	
+			var to = $('input[name="to"]').val();
+			if(ac=='mobile'){
+			    if ("" == to){$.showfloatdiv({
+				     txt: "请输入手机号码"
+			    }), $("#to").focus(), $.hidediv({});
+			         return false;
+			    }
+                var pattern=/^[1][0-9]{10}$/;
+                var ex = pattern.test(to);			
+			    if (!ex) {$.showfloatdiv({
+				    txt: "手机号格式不正确"
+			    }), $("#to").focus(), $.hidediv({});
+			        return false;
+			    }
+			}else if(ac=='email'){
+			    if ("" == to){$.showfloatdiv({
+				     txt: "请输入邮箱"
+			    }), $("#to").focus(), $.hidediv({});
+			         return false;
+			    }
+                var pattern = /^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/;
+                var exs = pattern.test(to);			
+			    if (!exs) {$.showfloatdiv({
+				    txt: "邮箱格式不正确"
+			    }), $("#to").focus(), $.hidediv({});
+			        return false;
+			    }				
+			}
+			var obj = $(this);
+			$(this).closest('form').zanpiansub({
+				curobj: $(this),
+				txt: "数据提交中,请稍后...",
+				onsucc: function(a) {
+					if ($.hidediv(a), parseInt(a["code"]) > 0) {
+						settime(obj)
+					}else{
+					 $('img.validate-img').attr("src",zanpian.image.validateurl());	
+					}
+				}
+			}).post({
+				url: cms.root + "index.php?s=/user/reg/send/"
+			}), !1;
+		});	
 		//购买VIP界面
 		$('body').on("click", "#user-vip", function() {
 			if (!zanpian.user.islogin()) {
 				zanpian.user.loginform();
 				return false;
 			}
-			zanpian.cms.modal(cms.root + 'index.php?s=user-buy-index');
+			zanpian.cms.modal(cms.root + 'index.php?s=/user/center/buy');
 		});
 		//点击冲值影币
 		$('body').on("click", "#user-payment", function() {
@@ -1102,19 +1212,23 @@ var zanpian = {
 				curobj: $("#pay_vip"),
 				txt: "数据提交中,请稍后...",
 				onsucc: function(a) {
-					if ($.hidediv(a), parseInt(a["rcode"]) > 0) {
+					if ($.hidediv(a), parseInt(a["code"]) > 0) {
 						setTimeout(function() {
 							$(".modal-dialog .close").trigger('click');
 						}, 500);
-						$("#viptime").html(a["data"]);
+						$("#grouptitle").html(a["data"]['user_grouptitle']);
+						$("#viptime").html(a["data"]['user_viptime']);
+						$("#usescore").html(a["data"]['user_score']);
 						zanpian.user.iframe();
 					}
-					if ($.hidediv(a), parseInt(a["rcode"]) == -2) {
-						zanpian.user.payment();
-					} else - 3 == parseInt(a["rcode"])
+					if ($.hidediv(a), parseInt(a["code"]) == -2) {
+						setTimeout(function() {
+				            zanpian.user.payment();
+				        }, 500);
+					} else - 3 == parseInt(a["code"])
 				}
 			}).post({
-				url: cms.root + "index.php?s=user-buy-index"
+				url: cms.root + "index.php?s=/user/center/buy"
 			}), !1;
 		});
 		//卡密充值
@@ -1123,45 +1237,43 @@ var zanpian = {
 				curobj: $(".form-pay-card"),
 				txt: "充值中,请稍后...",
 				onsucc: function(a){
-					if ($.hidediv(a), parseInt(a["rcode"]) > 0 || parseInt(a["code"])> 0) {
+					if ($.hidediv(a), parseInt(a["code"]) > 0 || parseInt(a["code"])> 0) {
 						setTimeout(function() {
 							$(".modal-dialog .close").trigger('click');
 						}, 500);
 						$("#usescore").html(parseInt($("#usescore").text()) + parseInt(a["data"]));
 						zanpian.user.iframe();
 					}
-					if ($.hidediv(a), parseInt(a["rcode"]) == -2 || parseInt(a["code"]) == -2) {
+					if ($.hidediv(a), parseInt(a["code"]) == -2 || parseInt(a["code"]) == -2) {
 						zanpian.user.payment();
-					} else - 3 == parseInt(a["rcode"])
+					} else - 3 == parseInt(a["code"])
 				}
 			}).post({
-				url: cms.root + "index.php?s=user-payment-card"
+				url: cms.root + "index.php?s=/user/payment/card"
 			}), !1;
 		});
 		//在线充值
 		$('body').on("click", "#user-pay", function(e) {
-			var type=$('input[name="pay_type"]:checked').val();
-			var score=$("#score_ext").val();
+			var type=$("select[name='payment'] option:selected").val();
+			var score=$("#score").val();
 			if(type=='weixinpay'){
               e.preventDefault();
-			  zanpian.cms.modal(cms.root + 'index.php?s=user-payment-index-pay_type-'+type+'-score_ext-'+score);
+			  zanpian.cms.modal(cms.root + 'index.php?s=/user/payment/index/payment/'+type+'/score/'+score); 
+			}  
               payckeck=setInterval(function(){check()},5000);
               function check(){
 				   if( $(".modal").css("display")=='none' ){clearInterval(payckeck); }
-	               $.get(cms.root + 'index.php?s=user-payment-check-type-weixinpay-order-'+$("#order_sign").text(), function(a){
-		           if(parseInt(a["rcode"]) > 0 || parseInt(a["code"])> 0) {
+	               $.get(cms.root + 'index.php?s=/user/payment/check/type/'+type+'/id/'+$("#order_id").text(), function(a){
+		           if ($.hidediv(a), parseInt(a["code"]) > 0 || parseInt(a["code"])> 0) {
                         clearInterval(payckeck);
                         $("#success").html('付款成功增加'+parseInt(a["data"])+'积分');
 						$("#usescore").html(parseInt($("#usescore").text()) + parseInt(a["data"]));
-			            setTimeout(function() {
-							$(".modal-dialog .close").trigger('click');
-						}, 5000);                     
+						$.showfloatdiv({txt: '付款成功增加'+parseInt(a["data"])+'积分',cssname : 'succ'});
+						$(".modal-dialog .close").trigger('click');                   
 						zanpian.user.iframe();
 		            }
 	               });
-                }
-                
-			}
+                }	
 		});			
 	},	
 	//会员充值窗口
@@ -1170,7 +1282,7 @@ var zanpian = {
 				zanpian.user.loginform();
 				return false;
 		}
-		zanpian.cms.modal(cms.root + 'index.php?s=user-payment-index');
+		zanpian.cms.modal(cms.root + 'index.php?s=/user/payment/index');
 	},
 	//检查VIP播放页面并刷新页面
 	'iframe': function() {
@@ -1185,7 +1297,7 @@ var zanpian = {
 	//检查登录状态
 	'islogin': function() {
 		islogin = 0;
-		if (document.cookie.indexOf('auth=') >= 0) {
+		if (document.cookie.indexOf('auth_sign=') >= 0) {
 			islogin = 1;
 			return true;
 		}
@@ -1194,7 +1306,7 @@ var zanpian = {
 	//弹出登录窗口
 	'loginform': function() {
 		if (!zanpian.user.islogin()) {
-			zanpian.cms.modal(cms.root + 'index.php?s=user-login-ajax');
+			zanpian.cms.modal(cms.root + 'index.php?s=/home/ajax/login');
 			zanpian.user.login();
 		} else {
 			return false;
@@ -1202,9 +1314,9 @@ var zanpian = {
 	},
 	//登录
 	'login': function() {
-		$('body').on("click", "#login-submit", function() {
+		$('body').on("click", "#login-submit", function(){									
 			if ("" == $("#username").val()){$.showfloatdiv({
-				txt: "请输入用户名或邮箱"
+				txt: "请输入用户名手机或邮箱"
 			}), $("#username").focus(), $.hidediv({});
 			    return false;
 			}
@@ -1214,7 +1326,7 @@ var zanpian = {
 					txt: "数据提交中,请稍后...",
 					isajax: 1,
 					onsucc: function(a) {
-						if ($.hidediv(a), parseInt(a["rcode"]) > 0) {
+						if ($.hidediv(a), parseInt(a["code"]) > 0) {
 							zanpian.user.iframe();
 							try {
 								zanpian.playlog.get();
@@ -1223,10 +1335,11 @@ var zanpian = {
 							setTimeout(function() {
 								$(".modal-dialog .close").trigger('click');
 							}, 500);
-						} else - 3 == parseInt(a["rcode"])
+						} else - 3 == parseInt(a["code"])
+						$('img.validate-img').attr("src",zanpian.image.validateurl());
 					}
 				}).post({
-					url: cms.root + "index.php?s=user-login-index"
+					url: cms.root + "index.php?s=/user/login/index"
 				}), !1;
 				$.showfloatdiv({
 					txt: "请输入密码"
@@ -1236,38 +1349,64 @@ var zanpian = {
 	},
 	//注册
 	'reg': function() {
-		$('body').on("click", "#reg-submit", function() {
-          	if ("" == $("#reg-form #username").val()){$.showfloatdiv({
+		$('body').on("click", "#reg-submit", function() {	
+			var ac = $('input[name="ac"]').val();	
+			var to = $('input[name="to"]').val();										  
+          	if ("" == $("#reg-form #user_name").val()){$.showfloatdiv({
 		         txt: "请输入用户名"
-	        }), $("#reg-form #username").focus(), $.hidediv({});
+	        }), $("#reg-form #user_name").focus(), $.hidediv({});
 			    return false;
 			}
-          	if ("" == $("#reg-form #email").val()){$.showfloatdiv({
-		         txt: "请输入邮箱"
-	        }), $("#reg-form #email").focus(), $.hidediv({});	
-			   return false;
-			}
-	        else{												  
-			if ("" != $("#reg-form #password").val()) return $("#reg-form").zanpiansub({
+			if(ac=='mobile'){
+          	    if ("" == to){$.showfloatdiv({
+		            txt: "请输入手机号码"
+	            }), $('input[name="to"]').focus(), $.hidediv({});	
+			       return false;
+			    }				
+                var pattern=/^[1][0-9]{10}$/;
+                var ex = pattern.test(to);			
+			    if (!ex) {$.showfloatdiv({
+				   txt: "手机号格式不正确"
+			    }), $('input[name="to"]').focus(), $.hidediv({});
+			       return false;
+			    }				
+				
+			}else if(ac=='email'){
+          	    if ("" == to){$.showfloatdiv({
+		            txt: "请输入邮箱"
+	            }), $('input[name="to"]').focus(), $.hidediv({});	
+			       return false;
+			    }
+                var pattern = /^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/;
+                var ex = pattern.test(to);
+			    if (!ex) {$.showfloatdiv({
+				   txt: "邮箱格式不正确"
+			    }), $('input[name="to"]').focus(), $.hidediv({});
+			       return false;
+			    }			
+			}	
+			if ("" != $("#reg-form #user_password").val()) return $("#reg-form").zanpiansub({
 				curobj: $("#reg-submit"),
 				txt: "数据提交中,请稍后...",
 				onsucc: function(a) {
-					if ($.hidediv(a), parseInt(a["rcode"]) > 0) {
+					if ($.hidediv(a), parseInt(a["code"]) > 0) {
 						try {
 							zanpian.playlog.get();
 						} catch (e) {}
 						setTimeout(function() {
 							$(".modal-dialog .close").trigger('click');
 						}, 500);
-					} else - 3 == parseInt(a["rcode"])
+					} else - 3 == parseInt(a["code"])
+					$('img.validate-img').attr("src",zanpian.image.validateurl());
+					return false;
 				}
 			}).post({
-				url: cms.root + "index.php?s=user-reg-index"
+				url: cms.root + "index.php?s=/user/reg/index"
 			}), !1;
 			$.showfloatdiv({
 				txt: "请输入密码"
-			}), $("#reg-form #password").focus(), $.hidediv({})
-		}})
+			}), $("#reg-form #user_password").focus(), $.hidediv({})
+		})
 	},
 	//注册
 	'userinfo': function(){
@@ -1277,16 +1416,17 @@ var zanpian = {
 		$.ajax({
 			type: 'get',
 			cache: false,
-			url: cms.root + 'index.php?s=user-home-flushinfo',
-			timeout: 3000,
+			url: cms.root + 'index.php?s=/user/center/flushinfo',
+			timeout: 10000,
 			success: function(a) {
-				return -7 == parseInt(a.rcode) ? ($.showfloatdiv({
+				
+				return -7 == parseInt(a.code) ? ($.showfloatdiv({
 					txt: a.msg,
 					classname: "error"
 				}), $.hidediv({
-					rcode: -1,
+					code: -1,
 					msg: a.msg
-				}), !1) : (a.uid > 0 && (parseInt(a.history) > 10 ? ($("#playlog-todo").html('<a target="_blank" href="' + cms.root + 'index.php?s=user-center-playlog">进入会员中心查看' + a.history + '条播放记录&gt;&gt;</a>'), $("#playlog-todo").show()) : ($("#playlog-todo").html(""), $("#playlog-todo").hide()), loginhtml = $("#navbar_user_login,#user_login").html(), $("#navbar_user_login,#user_login").html(a.html), $("#nav-signed").hide(), $(".logoutbt").unbind(), $('#navbar_user_login .nav-link').removeAttr("href"), $('#navbar_user_login').click(function() {
+				}), !1) : (a.uid > 0 && (parseInt(a.history) > 10 ? ($("#playlog-todo").html('<a target="_blank" href="' + cms.root + 'index.php?s=/user/center/playlog">进入会员中心查看' + a.history + '条播放记录&gt;&gt;</a>'), $("#playlog-todo").show()) : ($("#playlog-todo").html(""), $("#playlog-todo").hide()), loginhtml = $("#navbar_user_login,#user_login").html(), $("#navbar_user_login,#user_login").html(a.html), $("#nav-signed").hide(), $(".logoutbt").unbind(), $('#navbar_user_login .nav-link').removeAttr("href"), $('#navbar_user_login').click(function() {
 					$('.user-search,#example-navbar-collapse').hide();
 					$(this).children('#nav-signed').toggle();
 				}), $('#user_login').hover(function() {
@@ -1299,8 +1439,8 @@ var zanpian = {
 						txt: '数据提交中...',
 						cssname: 'loading'
 					});
-					$.get(cms.root + "index.php?s=home-user-loginout", function(r) {
-						if ($.hidediv(r), parseInt(r["rcode"]) > 0) {
+					$.get(cms.root + "index.php?s=/home/ajax/logout", function(r) {
+						if ($.hidediv(r), parseInt(r["code"]) > 0) {
 							$("#navbar_user_login,#user_login").html(loginhtml);
 							zanpian.playlog.get();
 							zanpian.user.iframe();
@@ -1320,7 +1460,7 @@ var zanpian = {
 				$(this).parents().find('li').removeClass('active');
 				$(this).parent('li').addClass('active');
 				$("#tab_title").text(txt);
-				if($(this).attr("data-id")=='comm'){
+				if($(this).attr("data-id")=='cm'){
 				    zanpian.cm.ajax(url);
 					zanpian.cm.emo();
 				}else{
@@ -1330,22 +1470,99 @@ var zanpian = {
 	},
 	//会员中心
 	'center': function() {
+    var countdown=60;
+    function settime(val) {
+        if (countdown == 0) {
+			val.addClass('btn-success').prop('disabled', false);
+            val.val("重新发送认证邮件");
+            countdown = 60;
+            return true;
+        } else {
+			val.removeClass('btn-success').prop('disabled', true);
+			val.val("重新发送(" + countdown + ")");
+            countdown--;
+        }
+        setTimeout(function() {settime(val) },1000)
+        }			
 	    if ($("#cxselect").length > 0) {
-		$.cxSelect.defaults.url = cms.public + "admin/zanpiancms/libs/jquery-cxselect/js/cityData.json";
+		$.cxSelect.defaults.url = cms.public + "/zanpianadmin/libs/jquery-cxselect/js/cityData.json";
         $.cxSelect.defaults.emptyStyle = 'none';
         $('#cxselect').cxSelect({
             selects: ['province', 'city', 'area']
         });       
         }
+		//绑定邮箱或手机
+		$('body').on("click", "#submit-bind", function() {
+			var ac = $('input[name="ac"]').val();	
+			var to = $('input[name="to"]').val();														   
+          	if ("" == $('input[name="code"]').val()){$.showfloatdiv({
+		         txt: "请输入验证码"
+	        }), $('input[name="code"]').focus(), $.hidediv({});
+			    return false;
+			}
+			$('form').zanpiansub({
+				curobj: $("#submit-bind"),
+				txt: "数据提交中,请稍后...",
+				onsucc: function(a) {
+					if ($.hidediv(a), parseInt(a["code"]) > 0) {
+						setTimeout(function() {
+							$(".modal-dialog .close").trigger('click');
+						}, 500);
+						if(ac=="email"){
+							$("#user_email").val(a["data"]);
+							$(".user_email").val(a["data"]);
+							$("#email").html(a["data"]);
+							$(".user-email-nubind").show();
+							$(".user-email-bind").hide();
+						}
+						if(ac=="mobile"){
+						    $("#user_mobile").val(a["data"]);
+							$(".user_mobile").val(a["data"]);
+							$("#mobile").html(a["data"]);
+							$(".user-mobile-nubind").show();
+							$(".user-mobile-bind").hide();							
+						}						
+					}
+				}
+			}).post({
+				url: cms.root + "index.php?s=/user/center/bind"
+			}), !1;
+		});	
+		$('body').on("click", "#unbind", function() {
+			var url = $(this).data('url');
+			var ac = $(this).data('type');
+			$.showfloatdiv({
+				txt: '数据提交中...',
+				cssname: 'loading'
+			});
+				$.get(url, function(r) {
+					if ($.hidediv(r), parseInt(r["code"]) > 0) {
+						if(ac=="email"){
+							$("#user_email").val('');
+							$(".user_email").val('');
+							$(".user-email-nubind").hide();
+							$(".user-email-bind").show();
+						}
+						if(ac=="mobile"){
+							$("#user_mobile").val('');
+							$(".user_mobile").val('');
+							$(".user-mobile-nubind").show();
+							$(".user-mobile-bind").hide();
+						}
+						}
+				}, 'json');
+		});		
 		//重新发送邮件
 		$('body').on("click", "#send_newemail", function() {
+			var obj=$(this);											 
 			$.showfloatdiv({
 				txt: '邮件发送中...',
 				cssname: 'loading'
 			});
-			$.post(cms.root + "index.php?s=user-reg-send", {
+			$.post(cms.root + "index.php?s=/user/reg/sendemail", {
 				val: 1
 			}, function(a) {
+				settime(obj)
 				$.hidediv(a);
 			}, 'json')
 		});
@@ -1361,14 +1578,15 @@ var zanpian = {
 			$.showfloatdiv({
 				wantclose: 2,
 				succdo: function(r){
-					$("#pids").html(r.pids);
 					parents.remove();
+					count=$('#total').text()*1-1;
+					$('#total').text(count);
 				},
 				txt: '确认删除?'
 			});
 		});
 		//删除多条数据
-		$('body').on("click", ".clearall", function() {
+		$('body').on("click", ".clearall", function() {									
 			var url = $(this).attr("data");
 			$.showfloatdiv({
 				wantclose: 2,
@@ -1376,8 +1594,14 @@ var zanpian = {
 				formid: 'clearcomm',
 				url: url,
 				succdo: function(r) {
-					$("#pids").html(r.pids);
-					zanpian.user.get(geturl);
+					if(r.data>0){
+					    count=$('#total').text()*1-r.data;
+					    $('#total').text(count);
+					}
+					 zanpian.user.get(geturl);
+					 if(typeof(hoturl) !="undefined" ){
+					   zanpian.user.hot(hoturl);
+					 }
 				},
 				txt: '确认删除?'
 			});
@@ -1389,11 +1613,11 @@ var zanpian = {
 		$('body').on("click", ".delcheckall", function() {
 			checkAll('');
 		});
-		$('.playlog-ul,.comment-ul').on('mouseenter', 'li', function() {
+		$('body').on('mouseenter', '#list li', function() {
 			$(this).find(".ui-del,.mdel").show();
 			$(this).addClass("hover");
 		});
-		$('.playlog-ul,.comment-ul').on('mouseleave', 'li', function() {
+		$('body').on('mouseleave', '#list li', function() {
 			$(this).find(".ui-del,.mdel").hide();
 			$(this).removeClass("hover");
 		});
@@ -1404,20 +1628,21 @@ var zanpian = {
 			zanpian.user.get(url);
 		});
 		//发布留言
-		$('body').on("click", "#add-feedback", function() {
+		$('body').on("click", "#user-edit", function(){
 			if (!zanpian.user.islogin()) {
 				zanpian.user.loginform();
 				return false;
-			}														
-			zanpian.cms.modal(cms.root + 'index.php?s=user-center-addgb');
-		});
+			}
+			var url=$(this).data('url');
+			zanpian.cms.modal(url);
+		});		
 		//修改密码
 		$('body').on("click", "#user-email", function() {
 			if(!zanpian.user.islogin()){
 				zanpian.user.loginform();
 				return false;
 			}										  
-			zanpian.cms.modal(cms.root + 'index.php?s=user-center-iemail');
+			zanpian.cms.modal(cms.root + 'index.php?s=/user/center/iemail');
 		});	
 		//发送私信
 		$('body').on("click", "#send-msg", function(){
@@ -1426,7 +1651,7 @@ var zanpian = {
 				return false;
 			}
 			var uid=$(this).attr('data-id');
-			zanpian.cms.modal(cms.root + 'index.php?s=user-home-msg-uid-'+uid);
+			zanpian.cms.modal(cms.root + 'index.php?s=/user/home/msg/id/'+uid);
 		});			
 		$('body').on("click", "#add-modal-submit", function(){
 			var url = $('#modal-form').attr('action');
@@ -1434,14 +1659,16 @@ var zanpian = {
 				curobj: $("#add-modal-submit"),
 				txt: "数据提交中,请稍后...",
 				onsucc: function(a) {
-					if ($.hidediv(a), parseInt(a["rcode"]) > 0) {
-						if(geturl) {
-							zanpian.user.get(geturl);
-						}
+					if ($.hidediv(a), parseInt(a["code"]) > 0) {
+					    if(typeof(geturl) !="undefined" ){
+					       zanpian.user.get(geturl);
+					    }						
 						setTimeout(function() {
 							$(".modal-dialog .close").trigger('click');
 						}, 500);
-					} else - 3 == parseInt(a["rcode"])
+					} else{
+						$('img.validate-img').attr("src",zanpian.image.validateurl());
+					}
 				}
 			}).post({
 				url: url
@@ -1451,10 +1678,9 @@ var zanpian = {
 			$.showfloatdiv({
 				wantclose: 2,
 				succdo: function(r) {
-					if (parseInt(r.rcode) == 1) {
+					if (parseInt(r.code) == 1) {
 						zanpian.user.get(geturl);
 						zanpian.user.hot(hoturl);
-						$("#pids").html(r.pids);
 					}
 				},
 				txt: '确认删除?'
@@ -1468,29 +1694,28 @@ var zanpian = {
 			$.get(
 			turl, '', function(data) {
 				$.hidediv(data);
-				if (parseInt(data.rcode) > 0) {
+				if (parseInt(data.code) > 0) {
 					zanpian.user.hot(hoturl);
 					zanpian.user.get(geturl);
-					$("#pids").html(data.pids);
 				}
 			}, 'json');
 			return false;
 		});
-		$('.user-center-vodlist').on('mouseenter', '.i-rss-list', function() {
+		$('body').on('mouseenter', '.i-rss-list', function(){
 			var vid = $(this).find(".play-pic").attr('data');
 			if ($("#play" + vid).attr('data') == '') {
 				$.ajax({
-					url: cms.root + "index.php?s=user-center-getplayurl-id-" + vid,
+					url: cms.root + "index.php?s=/user/center/getplayurl/id/" + vid,
 					success: function(r) {
 						$("#play" + vid).html(r);
-						$("#play" + vid).attr('data', '1');
+						$("#play" + vid).attr('data','1');
 					},
 					dataType: 'json'
 				});
 			}
 			$(this).find(".i-rss-box").show();
 		});
-		$('.user-center-vodlist').on('mouseleave', '.i-rss-list', function() {
+		$('body').on('mouseleave', '.i-rss-list', function() {
 			$(this).find(".i-rss-box").hide();
 		});
 		//表单提交	
@@ -1503,7 +1728,10 @@ var zanpian = {
 				curobj: $("#submit"),
 				txt: "数据提交中,请稍后...",
 				onsucc: function(a) {
-					$.hidediv(a);					
+					$.hidediv(a);
+				     if (parseInt(a.code) < 0) {
+						 $('img.validate-img').attr("src",zanpian.image.validateurl());
+				     }					
 				}
 			}).post({
 				   url:url
@@ -1519,7 +1747,7 @@ var zanpian = {
 			type: 'get',
 			dataType:'json',
 			cache: false,
-			url: cms.root + "index.php?s=user-center-sns-del-" +type,
+			url: cms.root + "index.php?s=/user/center/sns/type/" +type,
 			timeout: 3000,
 			success: function(r,a) {
 				$.hidediv(r);
@@ -1529,10 +1757,10 @@ var zanpian = {
 				}
 		}});	
 	 })
-	$('body').on("click", "#addsns", function(){
+	$('body').on("click", "#addsns", function(){								  
 		var type = $(this).attr('data-id');
 		var snsckeck = setInterval(snslogin,1000);
-		window.open(cms.root + 'index.php?s=user-snslogin-' + type + "-t-1", "_blank", "width=750, height=525");
+		window.open(cms.root + 'index.php?s=/user/snslogin/' + type + "/t/1", "_blank", "width=750, height=525");
 		function snslogin() {
 			if (zanpian.user.islogin()) {
                	zanpian.user.iframe();
@@ -1560,17 +1788,14 @@ var zanpian = {
 			cache: false,
 			timeout: 3000,
 			success: function(data) {
-				if (data.ajaxtxt != '') {
-					if ($('#datalist li').length > 3) $("html,body").animate({
-						scrollTop: $("#datalist li").offset().top - 130
+				if (data != '') {
+					if ($('#list li').length > 3) $("html,body").animate({
+						scrollTop: $("#list li").offset().top - 130
 					}, 1000);
-					$("#datalist").empty().html(data.ajaxtxt);
+					$("#data").empty().html(data);
 				} else {
-					$("#datalist").html('<div class="kong">当前没有任何数据！</div>');
+					$("#data").html('<div class="kong">当前没有任何数据！</div>');
 				};
-				$("#pages").html(data.pages);
-				$("#pagetop").html(data.pagetop);
-				$("#total").html(data.total);
 				$(".ajax-page ul a").click(function(e){
 					var pagegourl = $(this).attr('href');
 					zanpian.user.get(pagegourl);
@@ -1618,7 +1843,11 @@ var zanpian = {
 				$(this).parent('label').addClass('label-radio-on');
 			});
 		};
+	},
+	'editor': function () {	
+
 	}
+	
 },
 'gbook': { 
     //留言
@@ -1639,12 +1868,12 @@ var zanpian = {
 				curobj: $("#gb-submit"),
 				txt: "数据提交中,请稍后...",
 				onsucc: function(a) {
-					if ($.hidediv(a), parseInt(a["rcode"]) > 0) {
-					  zanpian.list.url(cms.root + "index.php?s=gb-show");
-					} else - 3 == parseInt(a["rcode"])
+					if ($.hidediv(a), parseInt(a["code"]) > 0) {
+					  zanpian.list.url(cms.root + "index.php?s=/home/gb/show");
+					} else - 3 == parseInt(a["code"])
 				}
 			}).post({
-				url: cms.root + "index.php?s=gb-add"
+				url: cms.root + "index.php?s=/home/gb/add"
 			}), !1;
 			$.showfloatdiv({
 				txt: "输入留言内容"
@@ -1660,8 +1889,8 @@ var zanpian = {
 			$.ajaxSetup({
 				cache: true
 			});
-			$.getScript("//cdn.staticfile.org/jquery.devbridge-autocomplete/1.2.26/jquery.autocomplete.min.js", function(response, status) {
-				$ajax_url = cms.root+'index.php?s=home-search-vod';
+			$.getScript(cms.public+"zanpiancms/js/jquery.autocomplete.min.js", function(response, status) {
+				$ajax_url = cms.root+'index.php?s=/home/search/vod';
 				$('.zanpian_wd').autocomplete({
 					serviceUrl : $ajax_url,
 					params: {'limit': $limit},
@@ -1685,23 +1914,6 @@ var zanpian = {
 	},
 
 },
-
-'language':{//简繁转换
-	's2t':function(){
-		if(feifei.browser.language=='zh-hk' || feifei.browser.language=='zh-tw'){
-			$.getScript("//cdn.feifeicms.co/jquery/s2t/0.1.0/s2t.min.js", function(data, status, jqxhr) {
-				$(document.body).s2t();//$.s2t(data);
-			});
-		}
-	},
-	't2s':function(){
-		if(feifei.browser.language=='zh-cn'){
-			$.getScript("//cdn.feifeicms.co/jquery/s2t/0.1.0/s2t.min.js", function(data, status, jqxhr) {
-				$(document.body).t2s();//$.s2t(data);
-			});
-		}
-	}
-},
 //图片处理
 'image': {
 	//幻灯与滑块
@@ -1718,7 +1930,7 @@ var swiper=new Swiper('.box-slide',{pagination:'.swiper-pagination',lazyLoading:
 		$.ajaxSetup({
 			cache: true
 		});
-		$.getScript("//cdn.staticfile.org/jquery.lazyload/1.9.1/jquery.lazyload.min.js", function(response,status){
+		$.getScript(cms.public+"zanpiancms/js/jquery.lazyload.min.js", function(response,status){
 			$(".loading").lazyload({
 				effect : "fadeIn",
 				failurelimit: 15
@@ -1727,19 +1939,27 @@ var swiper=new Swiper('.box-slide',{pagination:'.swiper-pagination',lazyLoading:
 	},	
 	//生成二维码
 	'qrcode': function(){
+		murl=cms.murl;		
+		if(murl=='' || murl === 'undefined'){
+			murl=zanpian.browser.url;
+		}
 	    if($(".qrcode")){
-		$(".qrcode").append('<img class="qrcode" src="//bshare.optimix.asia/barCode?site=weixin&url='+encodeURIComponent(cms.murl)+'"/>');
+		$(".qrcode").append('<img class="qrcode" src="//api.97bike.com/qrcode/?url='+encodeURIComponent(murl)+'"/>');
 		}
 		$("#qrcode").popover({
 				html: true
 		});
 		$("#qrcode").on('show.bs.popover', function () {
-			$("#qrcode").attr('data-content','<img class="qrcode" src="//bshare.optimix.asia/barCode?site=weixin&url='+encodeURIComponent(cms.murl)+'"/>');
+			$("#qrcode").attr('data-content','<img class="qrcode" src="//api.97bike.com/qrcode/?url='+encodeURIComponent(murl)+'"/>');
 		})
 	},
 	//生成验证码图片
 	'validate':function(){
-		return '<label><img class="validate-img" src="'+cms.root +'index.php?s=user-login-verify-' + Math.random()+'"></label>';
+		return '<label><img class="validate-img" src="'+cms.root +'index.php?s=/home/verify/index/' + Math.random()+'"></label>';
+	},
+	//生成验证码图片
+	'validateurl':function(){
+		return cms.root +'index.php?s=/home/verify/index/' + Math.random();
 	},	
 },
 //验证码相关
@@ -1750,13 +1970,13 @@ var swiper=new Swiper('.box-slide',{pagination:'.swiper-pagination',lazyLoading:
 	},
 	'focus': function(){//验证码框焦点
 		$('body').on("focus", "#zanpian-validate", function(){
-			$('#validate-zanpian').html(zanpian.image.validate()); 												
+			$('#validate-zanpian,#validate-zanpian-reg').html(zanpian.image.validate()); 												
 			$(this).unbind();
 		});
 	},
 	'click': function(){//点击刷新
 		$('body').on('click', 'img.validate-img', function(){
-			$('#validate-zanpian').html(zanpian.image.validate());
+			$(this).attr("src",zanpian.image.validateurl());
 		});
 	}
 },
@@ -1782,7 +2002,7 @@ var swiper=new Swiper('.box-slide',{pagination:'.swiper-pagination',lazyLoading:
 		$(".detail-hits").each(function(i){
 			var $this = $(".detail-hits").eq(i);
 			$.ajax({
-				url: cms.root+'index.php?s=home-hits-show-id-'+$this.attr("data-id")+'-sid-'+$this.attr("data-sid")+'-type-'+$this.attr("data-type"),
+				url: cms.root+'index.php?s=/home/hits/show/id/'+$this.attr("data-id")+'/sid/'+$this.attr("data-sid")+'/type/'+$this.attr("data-type"),
 				cache: true,
 				dataType: 'json',
 				success: function(data){
@@ -1794,8 +2014,8 @@ var swiper=new Swiper('.box-slide',{pagination:'.swiper-pagination',lazyLoading:
 				}
 			});
 	 });
-	} 
-}, 
+	}
+},
 'mobile':{//移动端专用
 	'jump': function(){
 		if( cms.murl && (zanpian.browser.url != cms.murl) ){
@@ -1825,23 +2045,12 @@ zanpian.detail.playlist();//更多剧集
 zanpian.detail.download();
 zanpian.user.index();
 zanpian.gbook.load();
-zanpian.hits.load();
 zanpian.validate.load();
+zanpian.playlog.load();//加载播放记录
 zanpian.updown.load();
 zanpian.score.load();//加载评分
 zanpian.cm.load();//加载评论
 zanpian.love.load();//订阅收藏
-zanpian.playlog.load();//加载播放记录
+zanpian.hits.load();
 //zanpian.language.s2t();//简体转繁体默认关闭需要开启去掉前面的//
 });
-function ViewGc(classid,id)
-{
-	if(document.getElementById("geci_"+classid+"_"+id).className=="geci")
-	{
-		document.getElementById("geci_"+classid+"_"+id).className="geci2";
-	}
-	else
-	{
-		document.getElementById("geci_"+classid+"_"+id).className="geci";
-	}	
-}  
